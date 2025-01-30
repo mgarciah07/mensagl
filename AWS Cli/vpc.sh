@@ -27,8 +27,8 @@ aws ec2 create-route --route-table-id "$rtb_public_id" --destination-cidr-block 
 aws ec2 associate-route-table --route-table-id "$rtb_public_id" --subnet-id "$subnet_public1_id"
 aws ec2 associate-route-table --route-table-id "$rtb_public_id" --subnet-id "$subnet_public2_id"
 
-# Crear Elastic IP y NAT Gateway
-eipalloc_id=$(aws ec2 allocate-address --domain "vpc" --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=eip-us-east-1a}]' --query 'AllocationId' --output text)
+# Crear Elastic IP y NAT Gateway (sin --tag-specifications)
+eipalloc_id=$(aws ec2 allocate-address --domain "vpc" --query 'AllocationId' --output text)
 nat_id=$(aws ec2 create-nat-gateway --subnet-id "$subnet_public1_id" --allocation-id "$eipalloc_id" --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=nat-public1-us-east-1a}]' --query 'NatGateway.NatGatewayId' --output text)
 
 # Pausa para esperar que el NAT Gateway esté completamente operativo
