@@ -7,6 +7,9 @@ instance_type="t2.micro"
 region="us-east-1"
 bucket_name="copias-seguridad-unique-name-$(date +%s)"  # Usa un nombre único
 
+# Desactivar paginación en AWS CLI
+export AWS_PAGER=""
+
 # Crear un par de claves
 aws ec2 create-key-pair --key-name "$key_name" --query 'KeyMaterial' --output text > "${key_name}.pem"
 chmod 400 "${key_name}.pem"
