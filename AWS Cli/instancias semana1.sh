@@ -2,7 +2,8 @@
 
 # Definir variables
 key_name="ssh-mensagl-2025-marcos"
-ami_id="ami-04b4f1a9cf54c11d0"  # Reemplaza con el ID de la AMI de Ubuntu que desees usar
+ami_idmatrix="ami-0e1bed4f06a3b463d"
+ami_idticket="ami-04b4f1a9cf54c11d0"  # Reemplaza con el ID de la AMI de Ubuntu que desees usar
 instance_type="t2.micro"
 region="us-east-1"
 bucket_name="copias-seguridad-unique-name-$(date +%s)"  # Usa un nombre único
@@ -35,7 +36,7 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protoco
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
 # Crear instancias Matrix-Synapse en subredes privadas
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_public1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --user-data file://../EC2-User/matrixdns.sh
+aws ec2 run-instances --image-id "$ami_idmatrix" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_public1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --user-data file://../EC2-User/matrixdns.sh
 
 # Crear instancias Wordpress en subredes privadas
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_public2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --user-data file://../EC2-User/ticketsdns.sh
+aws ec2 run-instances --image-id "$ami_idticket" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_public2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --user-data file://../EC2-User/ticketsdns.sh
