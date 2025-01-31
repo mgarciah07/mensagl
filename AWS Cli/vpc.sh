@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Desactivar paginación en AWS CLI
+export AWS_PAGER=""
 # Crear VPC
 vpc_id=$(aws ec2 create-vpc --cidr-block "10.0.0.0/16" --instance-tenancy "default" --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos}]' --query 'Vpc.VpcId' --output text)
 

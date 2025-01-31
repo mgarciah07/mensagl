@@ -35,8 +35,8 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protoco
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 80 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
-# Crear instancias Matrix-Synapse en subredes privadas
+# Crear instancias Matrix-Synapse en subredes publicas
 aws ec2 run-instances --image-id "$ami_idmatrix" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_public1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --user-data file://../EC2-User/matrixdns.sh
 
-# Crear instancias Wordpress en subredes privadas
+# Crear instancias Wordpress en subredes publicas
 aws ec2 run-instances --image-id "$ami_idticket" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_public2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --user-data file://../EC2-User/ticketsdns.sh
