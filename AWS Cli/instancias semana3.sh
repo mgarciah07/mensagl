@@ -38,6 +38,7 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_haproxy_id" --protocol 
 
 sg_matrix_synapse_id=$(aws ec2 create-security-group --group-name "sg_Matrix-Synapse" --description "Security group for Matrix-Synapse" --vpc-id "$vpc_id" --query 'GroupId' --output text)
 aws ec2 authorize-security-group-ingress --group-id "$sg_matrix_synapse_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id "$sg_matrix_synapse_id" --protocol tcp --port 80 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_matrix_synapse_id" --protocol tcp --port 443 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_matrix_synapse_id" --protocol tcp --port 8008 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_matrix_synapse_id" --protocol tcp --port 8448 --cidr 0.0.0.0/0
@@ -48,16 +49,16 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protoco
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
 # Crear instancias HAProxy en subredes públicas
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxy1}]'
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxy2}]'
+aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxy1}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxy2}]' --user-data file://script.sh
 
 # Crear instancias Matrix-Synapse en subredes privadas
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]'
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse2}]'
+aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse2}]' --user-data file://script.sh
 
 # Crear instancias Wordpress en subredes privadas
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]'
-aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress2}]'
+aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_id" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress2}]' --user-data file://script.sh
 
 # Crear RDS PostgreSQL para Matrix-Synapse
 aws rds create-db-instance --db-instance-identifier postgres-Matrix --db-instance-class db.t3.micro --engine postgres --master-username admin --master-user-password password --allocated-storage 20 --vpc-security-group-ids "$sg_matrix_synapse_id" --db-subnet-group-name "$subnet_private1_id"

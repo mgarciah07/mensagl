@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Template to create EC2 instance with Security Group for Matrix Synapse, using an existing VPC."
+
+# Grupos de seguridad
+Resources:
+  EC2SecurityGroup1:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "Matrix-Synapse"
+      GroupDescription: "Security group for Matrix Synapse service"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 8008
+          ToPort: 8008
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 8448
+          ToPort: 8448
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+
+  EC2SecurityGroup2:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "Wordpress-Tickets"
+      GroupDescription: "Security group for Tickets Wordpress"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+
+# Instancias
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-0e1bed4f06a3b463d"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            SnapshotId: "snap-00cdccb3239896f89"
+            VolumeSize: 16
+            VolumeType: gp3
+      SubnetId: !ImportValue PublicSubnet1Id  # Importando Subnet 1 desde la primera plantilla
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup1
+      Tags:
+        - Key: Name
+          Value: "Matrix synapse"
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            SnapshotId: "snap-00cdccb3239896f89"
+            VolumeSize: 16
+            VolumeType: gp3
+      SubnetId: !ImportValue PublicSubnet2Id  # Importando Subnet 2 desde la primera plantilla
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup2
+      Tags:
+        - Key: Name
+          Value: "Tickets Wordpress"
+
+Outputs:
+  Instance1Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance1
+
+  Instance2Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance2
+
+  SecurityGroup1Id:
+    Description: "Security Group ID"
+    Value: !Ref EC2SecurityGroup1
+  
+  SecurityGroup2Id:
+    Description: "Security Group ID"
+    Value: !Ref EC2SecurityGroup2
