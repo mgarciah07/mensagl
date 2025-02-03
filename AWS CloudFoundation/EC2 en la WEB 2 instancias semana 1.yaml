@@ -64,7 +64,6 @@ Resources:
             Encrypted: false
             DeleteOnTermination: true
             Iops: 3000
-            SnapshotId: "snap-00cdccb3239896f89"
             VolumeSize: 16
             VolumeType: gp3
       SubnetId: !ImportValue PublicSubnet1Id  # Importando Subnet 1 desde la primera plantilla
@@ -86,7 +85,6 @@ Resources:
             Encrypted: false
             DeleteOnTermination: true
             Iops: 3000
-            SnapshotId: "snap-00cdccb3239896f89"
             VolumeSize: 16
             VolumeType: gp3
       SubnetId: !ImportValue PublicSubnet2Id  # Importando Subnet 2 desde la primera plantilla
