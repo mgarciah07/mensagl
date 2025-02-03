@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Template to create EC2 instance with Security Group for Matrix Synapse, using an existing VPC."
+Description: "Template to create EC2 instances with Security Groups, using an existing VPC and assigning specific private IPs."
 
-# Grupos de seguridad
 Resources:
   EC2SecurityGroup1:
     Type: AWS::EC2::SecurityGroup
@@ -51,13 +50,40 @@ Resources:
           ToPort: 443
           CidrIp: "0.0.0.0/0"
 
-# Instancias
+  NetworkInterfaceMatrix:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PublicSubnet1Id
+      PrivateIpAddress: "10.210.1.2"
+      Description: "Network Interface for Matrix-Synapse"
+      GroupSet:
+        - !Ref EC2SecurityGroup1
+      Tags:
+        - Key: Name
+          Value: "Matrix-Synapse-Interface"
+
+  NetworkInterfaceWordpress:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PublicSubnet2Id
+      PrivateIpAddress: "10.210.2.2"
+      Description: "Network Interface for Wordpress"
+      GroupSet:
+        - !Ref EC2SecurityGroup2
+      Tags:
+        - Key: Name
+          Value: "Wordpress-Interface"
+
   EC2Instance1:
     Type: AWS::EC2::Instance
     Properties: 
       InstanceType: "t2.micro"
       ImageId: "ami-0e1bed4f06a3b463d"
       KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceMatrix
+          DeviceIndex: "0"
+          AssociatePublicIpAddress: "true"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
           Ebs:
@@ -66,12 +92,9 @@ Resources:
             Iops: 3000
             VolumeSize: 16
             VolumeType: gp3
-      SubnetId: !ImportValue PublicSubnet1Id  # Importando Subnet 1 desde la primera plantilla
-      SecurityGroupIds:
-        - !Ref EC2SecurityGroup1
       Tags:
         - Key: Name
-          Value: "Matrix synapse"
+          Value: "Matrix-Synapse"
 
   EC2Instance2:
     Type: AWS::EC2::Instance
@@ -79,6 +102,10 @@ Resources:
       InstanceType: "t2.micro"
       ImageId: "ami-04b4f1a9cf54c11d0"
       KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceWordpress
+          DeviceIndex: "0"
+          AssociatePublicIpAddress: "true"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
           Ebs:
@@ -87,12 +114,9 @@ Resources:
             Iops: 3000
             VolumeSize: 16
             VolumeType: gp3
-      SubnetId: !ImportValue PublicSubnet2Id  # Importando Subnet 2 desde la primera plantilla
-      SecurityGroupIds:
-        - !Ref EC2SecurityGroup2
       Tags:
         - Key: Name
-          Value: "Tickets Wordpress"
+          Value: "Wordpress-Tickets"
 
 Outputs:
   Instance1Id:
