@@ -3,16 +3,16 @@
 # Desactivar paginación en AWS CLI
 export AWS_PAGER=""
 # Crear VPC
-vpc_id=$(aws ec2 create-vpc --cidr-block "10.0.0.0/16" --instance-tenancy "default" --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos}]' --query 'Vpc.VpcId' --output text)
+vpc_id=$(aws ec2 create-vpc --cidr-block "10.210.0.0/16" --instance-tenancy "default" --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos}]' --query 'Vpc.VpcId' --output text)
 
 # Habilitar DNS Hostnames
 aws ec2 modify-vpc-attribute --vpc-id "$vpc_id" --enable-dns-hostnames '{"Value":true}'
 
 # Crear subredes
-subnet_public1_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.0.1.0/24" --availability-zone "us-east-1a" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-public1-us-east-1a}]' --query 'Subnet.SubnetId' --output text)
-subnet_public2_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.0.2.0/24" --availability-zone "us-east-1b" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-public2-us-east-1b}]' --query 'Subnet.SubnetId' --output text)
-subnet_private1_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.0.3.0/24" --availability-zone "us-east-1a" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-private1-us-east-1a}]' --query 'Subnet.SubnetId' --output text)
-subnet_private2_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.0.4.0/24" --availability-zone "us-east-1b" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-private2-us-east-1b}]' --query 'Subnet.SubnetId' --output text)
+subnet_public1_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.210.1.0/24" --availability-zone "us-east-1a" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-public1-us-east-1a}]' --query 'Subnet.SubnetId' --output text)
+subnet_public2_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.210.2.0/24" --availability-zone "us-east-1b" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-public2-us-east-1b}]' --query 'Subnet.SubnetId' --output text)
+subnet_private1_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.210.3.0/24" --availability-zone "us-east-1a" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-private1-us-east-1a}]' --query 'Subnet.SubnetId' --output text)
+subnet_private2_id=$(aws ec2 create-subnet --vpc-id "$vpc_id" --cidr-block "10.210.4.0/24" --availability-zone "us-east-1b" --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-subnet-private2-us-east-1b}]' --query 'Subnet.SubnetId' --output text)
 
 # Crear y asociar Internet Gateway
 igw_id=$(aws ec2 create-internet-gateway --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=vpc-mensagl-2025-Marcos-igw}]' --query 'InternetGateway.InternetGatewayId' --output text)
