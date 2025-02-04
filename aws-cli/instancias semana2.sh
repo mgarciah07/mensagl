@@ -11,9 +11,6 @@ bucket_name="copias-seguridad-unique-name-$(date +%s)"  # Usa un nombre único
 # Desactivar paginación en AWS CLI
 export AWS_PAGER=""
 
-# Crear un par de claves
-# aws ec2 create-key-pair --key-name "$key_name" --query 'KeyMaterial' --output text > "${key_name}.pem"
-# chmod 400 "${key_name}.pem"
 
 # Obtener IDs de subredes y VPC
 vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=vpc-mensagl-2025-Marcos" --query "Vpcs[0].VpcId" --output text)
@@ -41,16 +38,16 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol
 
 
 # Crear interfaces de red con IPs privadas específicas y asociarlas con las instancias
-interface_matrix_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --description "Interface for Matrix-Synapse" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-interface_wordpress_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
+interface_matrix1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --description "Interface for Matrix-Synapse" --query 'NetworkInterface.NetworkInterfaceId' --output text)
+interface_wordpress1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 interface_postgres1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --description "Interface for postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 interface_postgres2_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.101" --description "Interface for postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 
 # Crear instancias Matrix-Synapse en subredes publicas con IP privada
-instance_matrix_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --network-interface "NetworkInterfaceId=$interface_matrix_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/matrixdns.sh)
+instance_matrix1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --network-interface "NetworkInterfaceId=$interface_matrix1_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/matrixdns.sh)
 
 # Crear instancias Wordpress en subredes publicas con IP privada
-instance_wordpress_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --network-interface "NetworkInterfaceId=$interface_wordpress_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/ticketsdns.sh)
+instance_wordpress1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --network-interface "NetworkInterfaceId=$interface_wordpress1_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/ticketsdns.sh)
 
 # Crear instancias Postgres con IP privada
 instance_postgres1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_postgres_id" --network-interface "NetworkInterfaceId=$interface_postgres1_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres1}]' --query 'Instances[0].InstanceId' --output text)
