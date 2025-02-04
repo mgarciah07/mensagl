@@ -35,15 +35,15 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protoco
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 80 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
-sg_postgres_id=$(aws ec2 create-security-group --group-name "sg_wordpress" --description "Security group for Wordpress" --vpc-id "$vpc_id" --query 'GroupId' --output text)
-aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
-aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
+sg_postgres_id=$(aws ec2 create-security-group --group-name "sg_postgres" --description "Security group for Postgres" --vpc-id "$vpc_id" --query 'GroupId' --output text)
+aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
 
 
 # Crear interfaces de red con IPs privadas específicas y asociarlas con las instancias
 interface_matrix_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --description "Interface for Matrix-Synapse" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 interface_wordpress_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-interface_postgres_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
+interface_postgres_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --description "Interface for postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 
 # Crear instancias Matrix-Synapse en subredes publicas con IP privada
 instance_matrix_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --network-interface "NetworkInterfaceId=$interface_matrix_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/matrixdns.sh)
