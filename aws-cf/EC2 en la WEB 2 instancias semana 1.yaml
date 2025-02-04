@@ -54,7 +54,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupName: "Postgres-Matrix"
-      GroupDescription: "Security group for Tickets Wordpress"
+      GroupDescription: "Security group for Postgres"
       VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -155,7 +155,7 @@ Resources:
       NetworkInterfaces:
         - NetworkInterfaceId: !Ref NetworkInterfacePostgres
           DeviceIndex: "0"
-          AssociatePublicIpAddress: "true"
+          AssociatePublicIpAddress: "false"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
           Ebs:
