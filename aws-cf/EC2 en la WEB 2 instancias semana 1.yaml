@@ -93,7 +93,7 @@ Resources:
   NetworkInterfacePostgres:
     Type: AWS::EC2::NetworkInterface
     Properties:
-      SubnetId: !ImportValue PrivateSubnet1
+      SubnetId: !ImportValue PrivateSubnet1Id
       PrivateIpAddress: "10.210.3.10"
       Description: "Network Interface for Postgres"
       GroupSet:
