@@ -177,7 +177,7 @@ Outputs:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2Instance2
 
-  Instance2Id:
+  Instance3Id:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2Instance3
 
