@@ -111,7 +111,6 @@ Resources:
       NetworkInterfaces:
         - NetworkInterfaceId: !Ref NetworkInterfaceMatrix
           DeviceIndex: "0"
-          AssociatePublicIpAddress: "true"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
           Ebs:
@@ -133,7 +132,6 @@ Resources:
       NetworkInterfaces:
         - NetworkInterfaceId: !Ref NetworkInterfaceWordpress
           DeviceIndex: "0"
-          AssociatePublicIpAddress: "true"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
           Ebs:
@@ -155,7 +153,6 @@ Resources:
       NetworkInterfaces:
         - NetworkInterfaceId: !Ref NetworkInterfacePostgres
           DeviceIndex: "0"
-          AssociatePublicIpAddress: "false"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
           Ebs:
