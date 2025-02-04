@@ -165,6 +165,52 @@ Resources:
         - Key: Name
           Value: "Postgres-Matrix"
 
+  # New Security Group for RDS
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "MySQL-RDS"
+      GroupDescription: "Security group for RDS MySQL allowing EC2 access"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref EC2SecurityGroup2  # Allowing Wordpress EC2 to access the RDS MySQL DB
+
+  # MySQL RDS Instance
+  MySQLRDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      MasterUsername: admin             # Nombre de usuario en texto plano
+      MasterUserPassword: Password123   # Contraseña en texto plano
+      DBName: wordpress_db
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup  # Assigning the RDS Security Group
+      MultiAZ: false
+      PubliclyAccessible: false
+      StorageType: gp2
+      BackupRetentionPeriod: 7
+      Tags:
+        - Key: Name
+          Value: "MySQL-Wordpress-RDS"
+      DBSubnetGroupName: !Ref DBSubnetGroup
+
+  # DB Subnet Group for RDS
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "Subnet group for RDS instances"
+      SubnetIds: 
+        - !ImportValue PrivateSubnet1Id
+        - !ImportValue PrivateSubnet2Id
+      Tags:
+        - Key: Name
+          Value: "RDS-SubnetGroup"
+
 Outputs:
   Instance1Id:
     Description: "Instance ID of the created EC2 instance"
@@ -178,6 +224,10 @@ Outputs:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2Instance3
 
+  RDSInstanceEndpoint:
+    Description: "RDS MySQL Endpoint"
+    Value: !GetAtt MySQLRDS.Endpoint.Address
+
   SecurityGroup1Id:
     Description: "Security Group ID"
     Value: !Ref EC2SecurityGroup1
@@ -189,3 +239,7 @@ Outputs:
   SecurityGroup3Id:
     Description: "Security Group ID"
     Value: !Ref EC2SecurityGroup3
+
+  RDSSecurityGroupId:
+    Description: "Security Group ID for RDS"
+    Value: !Ref RDSSecurityGroup
