@@ -90,7 +90,7 @@ Resources:
         - Key: Name
           Value: "Wordpress-Interface"
 
-  NetworkInterfacePostgres:
+  NetworkInterfacePostgres1:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PrivateSubnet1Id
@@ -100,7 +100,19 @@ Resources:
         - !Ref EC2SecurityGroup3
       Tags:
         - Key: Name
-          Value: "Postgres-Interface"
+          Value: "Postgres-Interface1"
+  
+  NetworkInterfacePostgres2:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PrivateSubnet1Id
+      PrivateIpAddress: "10.210.3.101"
+      Description: "Network Interface for Postgres"
+      GroupSet:
+        - !Ref EC2SecurityGroup3
+      Tags:
+        - Key: Name
+          Value: "Postgres-Interface2"
 
   EC2Instance1:
     Type: AWS::EC2::Instance
@@ -151,7 +163,7 @@ Resources:
       ImageId: "ami-0e1bed4f06a3b463d"
       KeyName: "ssh-mensagl-2025-Marcos"
       NetworkInterfaces:
-        - NetworkInterfaceId: !Ref NetworkInterfacePostgres
+        - NetworkInterfaceId: !Ref NetworkInterfacePostgres1
           DeviceIndex: "0"
       BlockDeviceMappings:
         - DeviceName: "/dev/sda1"
@@ -163,7 +175,28 @@ Resources:
             VolumeType: gp3
       Tags:
         - Key: Name
-          Value: "Postgres-Matrix"
+          Value: "Postgres-Matrix1"
+
+  EC2Instance4:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-0e1bed4f06a3b463d"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfacePostgres2
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Postgres-Matrix2"
 
   # New Security Group for RDS
   RDSSecurityGroup:
@@ -223,6 +256,10 @@ Outputs:
   Instance3Id:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2Instance3
+
+  Instance4Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance4
 
   RDSInstanceEndpoint:
     Description: "RDS MySQL Endpoint"
