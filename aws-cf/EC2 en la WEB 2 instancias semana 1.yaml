@@ -70,7 +70,7 @@ Resources:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PublicSubnet1Id
-      PrivateIpAddress: "10.210.1.2"
+      PrivateIpAddress: "10.210.1.20"
       Description: "Network Interface for Matrix-Synapse"
       GroupSet:
         - !Ref EC2SecurityGroup1
@@ -82,7 +82,7 @@ Resources:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PublicSubnet2Id
-      PrivateIpAddress: "10.210.2.2"
+      PrivateIpAddress: "10.210.2.20"
       Description: "Network Interface for Wordpress"
       GroupSet:
         - !Ref EC2SecurityGroup2
@@ -94,7 +94,7 @@ Resources:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PrivateSubnet1Id
-      PrivateIpAddress: "10.210.3.10"
+      PrivateIpAddress: "10.210.3.100"
       Description: "Network Interface for Postgres"
       GroupSet:
         - !Ref EC2SecurityGroup3
