@@ -189,6 +189,6 @@ Outputs:
     Description: "Security Group ID"
     Value: !Ref EC2SecurityGroup2
 
-  SecurityGroup2Id:
+  SecurityGroup3Id:
     Description: "Security Group ID"
     Value: !Ref EC2SecurityGroup3
