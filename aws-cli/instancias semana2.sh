@@ -6,7 +6,6 @@ ami_Ubuntu_22_04="ami-0e1bed4f06a3b463d"
 ami_Ubuntu_24_04="ami-04b4f1a9cf54c11d0"  # Reemplaza con el ID de la AMI de Ubuntu que desees usar
 instance_type="t2.micro"
 region="us-east-1"
-bucket_name="copias-seguridad-unique-name-$(date +%s)"  # Usa un nombre único
 
 # Desactivar paginación en AWS CLI
 export AWS_PAGER=""
