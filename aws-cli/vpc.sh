@@ -49,4 +49,3 @@ aws ec2 associate-route-table --route-table-id "$rtb_private2_id" --subnet-id "$
 aws ec2 describe-vpcs --vpc-ids "$vpc_id"
 aws ec2 describe-route-tables --route-table-ids "$rtb_private1_id" "$rtb_private2_id"
 
-"./instancias semana2.sh"
