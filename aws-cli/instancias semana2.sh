@@ -36,8 +36,8 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
 
 # Crear interfaces de red con grupos de seguridad asignados directamente
-interface_matrix1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --groups "$sg_matrix_synapse_id" --description "Interface for Matrix-Synapse" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-interface_wordpress1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --groups "$sg_wordpress_id" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
+interface_matrix1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --groups "$sg_matrix_synapse_id" --description "Interface for Matrix-Synapse" --associate-public-ip-address --query 'NetworkInterface.NetworkInterfaceId' --output text)
+interface_wordpress1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --groups "$sg_wordpress_id" --description "Interface for Wordpress" --associate-public-ip-address --query 'NetworkInterface.NetworkInterfaceId' --output text)
 interface_postgres1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --groups "$sg_postgres_id" --description "Interface for Postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 interface_postgres2_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.101" --groups "$sg_postgres_id" --description "Interface for Postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 
