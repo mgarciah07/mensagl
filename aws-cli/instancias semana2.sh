@@ -34,21 +34,15 @@ sg_postgres_id=$(aws ec2 create-security-group --group-name "sg_postgres" --desc
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
 
-# Crear interfaces de red con grupos de seguridad asignados directamente
-interface_matrix1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --groups "$sg_matrix_synapse_id" --description "Interface for Matrix-Synapse" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-interface_wordpress1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --groups "$sg_wordpress_id" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-interface_postgres1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --groups "$sg_postgres_id" --description "Interface for Postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-interface_postgres2_id=$(aws ec2 create-network-interface --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.101" --groups "$sg_postgres_id" --description "Interface for Postgres" --query 'NetworkInterface.NetworkInterfaceId' --output text)
-
 # Crear instancias Matrix-Synapse en subredes publicas con IP privada y pública
-instance_matrix1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --network-interface "NetworkInterfaceId=$interface_matrix1_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/matrixdns.sh)
+instance_matrix1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --associate-public-ip-address --security-group-ids "$sg_matrix_synapse_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/matrixdns.sh)
 
 # Crear instancias Wordpress en subredes publicas con IP privada y pública
-instance_wordpress1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --network-interface "NetworkInterfaceId=$interface_wordpress1_id,DeviceIndex=0,AssociatePublicIpAddress=true" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/ticketsdns.sh)
+instance_wordpress1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --associate-public-ip-address --security-group-ids "$sg_wordpress_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --query 'Instances[0].InstanceId' --output text --user-data file://../aws-user-data/ticketsdns.sh)
 
 # Crear instancias Postgres con IP privada
-instance_postgres1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --network-interface "NetworkInterfaceId=$interface_postgres1_id,DeviceIndex=0" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres1}]' --query 'Instances[0].InstanceId' --output text)
-instance_postgres1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --network-interface "NetworkInterfaceId=$interface_postgres2_id,DeviceIndex=0" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres2}]' --query 'Instances[0].InstanceId' --output text)
+instance_postgres1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --security-group-ids "$sg_postgres_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres1}]' --query 'Instances[0].InstanceId' --output text)
+instance_postgres2_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.101" --security-group-ids "$sg_postgres_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres2}]' --query 'Instances[0].InstanceId' --output text)
 
 # Crear grupo de seguridad para RDS
 sg_rds_id=$(aws ec2 create-security-group --group-name "sg_rds_mysql" --description "Security group for RDS MySQL" --vpc-id "$vpc_id" --query 'GroupId' --output text)
@@ -70,3 +64,9 @@ aws rds create-db-instance \
     --vpc-security-group-ids "$sg_rds_id" \
     --db-subnet-group-name "rds-subnet-group-mensagl" \
     --backup-retention-period 7 \
+    --storage-type "gp2" \
+    --multi-az \
+    --no-publicly-accessible
+
+echo "Instancias creadas y configuradas con IPs privadas y públicas."
+
