@@ -58,7 +58,7 @@ sg_rds_id=$(aws ec2 create-security-group --group-name "sg_rds_mysql" --descript
 aws ec2 authorize-security-group-ingress --group-id "$sg_rds_id" --protocol tcp --port 3306 --source-group "$sg_wordpress_id"
 
 # Crear un grupo de subred RDS para la subred privada 2
-aws rds create-db-subnet-group --db-subnet-group-name "rds-subnet-group-mensagl" --db-subnet-group-description "Subnet group for RDS MySQL" --subnet-ids "$subnet_private2_id"
+aws rds create-db-subnet-group --db-subnet-group-name "rds-subnet-group-mensagl" --db-subnet-group-description "Subnet group for RDS MySQL" --subnet-ids "$subnet_private1_id" "$subnet_private2_id"
 
 # Creación de la RDS de MySQL
 aws rds create-db-instance \
