@@ -73,7 +73,6 @@ aws rds create-db-instance \
     --backup-retention-period 7 \
     --storage-type "gp2" \
     --multi-az \
-    --publicly-accessible false \
-    --no-cli-pager
+    --no-publicly-accessible
 
 echo "Instancias creadas y configuradas con IPs privadas específicas y IP pública."
