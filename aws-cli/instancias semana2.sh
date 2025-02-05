@@ -35,7 +35,6 @@ sg_postgres_id=$(aws ec2 create-security-group --group-name "sg_postgres" --desc
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
 
-
 # Crear interfaces de red con grupos de seguridad asignados directamente
 interface_matrix1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.20" --groups "$sg_matrix_synapse_id" --description "Interface for Matrix-Synapse" --query 'NetworkInterface.NetworkInterfaceId' --output text)
 interface_wordpress1_id=$(aws ec2 create-network-interface --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.20" --groups "$sg_wordpress_id" --description "Interface for Wordpress" --query 'NetworkInterface.NetworkInterfaceId' --output text)
@@ -52,5 +51,29 @@ instance_wordpress1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --
 instance_postgres1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --network-interface "NetworkInterfaceId=$interface_postgres1_id,DeviceIndex=0" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres1}]' --query 'Instances[0].InstanceId' --output text)
 instance_postgres1_id=$(aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --network-interface "NetworkInterfaceId=$interface_postgres2_id,DeviceIndex=0" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres2}]' --query 'Instances[0].InstanceId' --output text)
 
+# Crear grupo de seguridad para RDS
+sg_rds_id=$(aws ec2 create-security-group --group-name "sg_rds_mysql" --description "Security group for RDS MySQL" --vpc-id "$vpc_id" --query 'GroupId' --output text)
+
+# Permitir conexiones solo desde el grupo de seguridad de Wordpress al RDS
+aws ec2 authorize-security-group-ingress --group-id "$sg_rds_id" --protocol tcp --port 3306 --source-group "$sg_wordpress_id"
+
+# Crear un grupo de subred RDS para la subred privada 2
+aws rds create-db-subnet-group --db-subnet-group-name "rds-subnet-group-mensagl" --db-subnet-group-description "Subnet group for RDS MySQL" --subnet-ids "$subnet_private2_id"
+
+# Creación de la RDS de MySQL
+aws rds create-db-instance \
+    --db-instance-identifier "rds-mensagl-mysql" \
+    --db-instance-class "db.t3.micro" \
+    --engine "mysql" \
+    --allocated-storage 20 \
+    --master-username "admin" \
+    --master-user-password "Password123" \
+    --vpc-security-group-ids "$sg_rds_id" \
+    --db-subnet-group-name "rds-subnet-group-mensagl" \
+    --backup-retention-period 7 \
+    --storage-type "gp2" \
+    --multi-az \
+    --publicly-accessible false \
+    --no-cli-pager
 
 echo "Instancias creadas y configuradas con IPs privadas específicas y IP pública."
