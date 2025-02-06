@@ -9,7 +9,11 @@ Resources:
       OwnershipControls:
         Rules:
           - ObjectOwnership: 'ObjectWriter'
-      AccessControl: PublicReadWrite
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
   S3BucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
@@ -22,9 +26,10 @@ Resources:
             Action:
               - 's3:GetObject'
               - 's3:PutObject'
+              - 's3:DeleteObject'
             Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
 Outputs:
   BucketName:
     Value: !Ref S3Bucket
-    Description: "The name of the S3 bucket"
+    Description: "s3-mensagl-marcos"
 
