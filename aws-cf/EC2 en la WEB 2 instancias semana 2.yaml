@@ -242,8 +242,8 @@ Resources:
       AllocatedStorage: 20
       DBInstanceClass: db.t3.micro
       Engine: mysql
-      MasterUsername: admin             # Nombre de usuario en texto plano
-      MasterUserPassword: Password123   # Contraseña en texto plano
+      MasterUsername: wordpress             # Nombre de usuario en texto plano
+      MasterUserPassword: Admin123   # Contraseña en texto plano
       DBName: wordpress_db
       VPCSecurityGroups:
         - !Ref RDSSecurityGroup  # Assigning the RDS Security Group
