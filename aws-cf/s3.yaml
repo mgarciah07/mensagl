@@ -33,3 +33,4 @@ Outputs:
     Value: !Ref S3Bucket
     Description: "s3-mensagl-marcos"
 
+
