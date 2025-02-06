@@ -16,7 +16,7 @@
                 "s3:GetObject",
                 "s3:DeleteObject"
             ],
-            "Resource": "arn:aws:s3:::s3-mensagl-marcos*"
+            "Resource": "arn:aws:s3:::s3-mensagl-marcos"
         }
     ]
 }
