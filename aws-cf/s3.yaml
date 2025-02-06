@@ -3,7 +3,7 @@ Resources:
   S3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: 's3-mensagl-Marcos'
+      BucketName: 's3-mensagl-marcos'
       VersioningConfiguration:
         Status: 'Enabled'
       AccessControl: PublicReadWrite
@@ -23,4 +23,4 @@ Resources:
 Outputs:
   BucketName:
     Value: !Ref S3Bucket
-    Description: "s3-mensagl-Marcos"
+    Description: "s3-mensagl-marcos"
