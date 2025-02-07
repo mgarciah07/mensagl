@@ -1,0 +1,326 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Template to create EC2 instances with Security Groups, using an existing VPC and assigning specific private IPs."
+
+Resources:
+  EC2SecurityGroupHAProxy:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "HAProxy"
+      GroupDescription: "Security group for HAProxy"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+
+  EC2SecurityGroupMatrix:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "Matrix-Synapse"
+      GroupDescription: "Security group for Matrix Synapse service"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 8008
+          ToPort: 8008
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 8448
+          ToPort: 8448
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+
+  EC2SecurityGroupWordpress:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "Wordpress-Tickets"
+      GroupDescription: "Security group for Tickets Wordpress"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+
+  EC2SecurityGroupPostgres:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "Postgres-Matrix"
+      GroupDescription: "Security group for Postgres"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: "0.0.0.0/0"
+
+  NetworkInterfaceMatrix:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PublicSubnet1Id
+      PrivateIpAddress: "10.210.1.20"
+      Description: "Network Interface for Matrix-Synapse"
+      GroupSet:
+        - !Ref EC2SecurityMatrix
+      Tags:
+        - Key: Name
+          Value: "Matrix-Synapse-Interface"
+      
+  NetworkInterfaceWordpress:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PublicSubnet2Id
+      PrivateIpAddress: "10.210.2.20"
+      Description: "Network Interface for Wordpress"
+      GroupSet:
+        - !Ref EC2SecurityGroupWordpress:
+      Tags:
+        - Key: Name
+          Value: "Wordpress-Interface"
+
+  NetworkInterfacePostgres1:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PrivateSubnet1Id
+      PrivateIpAddress: "10.210.3.100"
+      Description: "Network Interface for Postgres"
+      GroupSet:
+        - !Ref Postgres:
+      Tags:
+        - Key: Name
+          Value: "Postgres-Interface1"
+  
+  NetworkInterfacePostgres2:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: !ImportValue PrivateSubnet1Id
+      PrivateIpAddress: "10.210.3.101"
+      Description: "Network Interface for Postgres"
+      GroupSet:
+        - !Ref Postgres:
+      Tags:
+        - Key: Name
+          Value: "Postgres-Interface2"
+
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceMatrix
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Matrix-Synapse"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          mkdir duckdns
+          cd duckdns
+          # Poner entre las comillas el echo url=...
+          echo 'echo url="https://www.duckdns.org/update?domains=marcosmatrix&token=899e823b-dbdf-4fda-ba95-5138dc4939b7&ip=" | curl -k -o ~/duckdns/duck.log -K -' > duck.sh
+          chmod 700 duck.sh
+          tarea="*/5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1"
+          # Añade la tarea cron al crontab actual
+          (crontab -l 2>/dev/null; echo "$tarea") | crontab -
+          ./duck.sh
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceWordpress
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Wordpress-Tickets"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          mkdir duckdns
+          cd duckdns
+          # Poner entre las comillas el echo url=...
+          echo 'echo url="https://www.duckdns.org/update?domains=marcosticket&token=899e823b-dbdf-4fda-ba95-5138dc4939b7&ip=" | curl -k -o ~/duckdns/duck.log -K -' > duck.sh
+          chmod 700 duck.sh
+          tarea="*/5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1"
+          # Añade la tarea cron al crontab actual
+          (crontab -l 2>/dev/null; echo "$tarea") | crontab -
+          ./duck.sh
+  
+  EC2Instance3:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-0e1bed4f06a3b463d"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfacePostgres1
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Postgres-Matrix1"
+
+  EC2Instance4:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-0e1bed4f06a3b463d"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfacePostgres2
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Postgres-Matrix2"
+
+  # New Security Group for RDS
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: "MySQL-RDS"
+      GroupDescription: "Security group for RDS MySQL allowing EC2 access"
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref EC2SecurityGroupWordpress:  # Allowing Wordpress EC2 to access the RDS MySQL DB
+
+  # MySQL RDS Instance
+  MySQLRDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      MasterUsername: wordpress             # Nombre de usuario en texto plano
+      MasterUserPassword: Admin123   # Contraseña en texto plano
+      DBName: wordpress
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup  # Assigning the RDS Security Group
+      MultiAZ: false
+      PubliclyAccessible: false
+      StorageType: gp2
+      BackupRetentionPeriod: 7
+      Tags:
+        - Key: Name
+          Value: "MySQL-Wordpress-RDS"
+      DBSubnetGroupName: !Ref DBSubnetGroup
+
+  # DB Subnet Group for RDS
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "Subnet group for RDS instances"
+      SubnetIds: 
+        - !ImportValue PrivateSubnet1Id
+        - !ImportValue PrivateSubnet2Id
+      Tags:
+        - Key: Name
+          Value: "RDS-SubnetGroup"
+
+Outputs:
+  Instance1Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance1
+
+  Instance2Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance2
+
+  Instance3Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance3
+
+  Instance4Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2Instance4
+
+  RDSInstanceEndpoint:
+    Description: "RDS MySQL Endpoint"
+    Value: !GetAtt MySQLRDS.Endpoint.Address
+
+  SecurityGroup1Id:
+    Description: "Security Group ID"
+    Value: !Ref EC2SecurityMatrix
+  
+  SecurityGroup2Id:
+    Description: "Security Group ID"
+    Value: !Ref EC2SecurityGroupWordpress:
+
+  SecurityGroup3Id:
+    Description: "Security Group ID"
+    Value: !Ref Postgres:
+
+  RDSSecurityGroupId:
+    Description: "Security Group ID for RDS"
+    Value: !Ref RDSSecurityGroup
