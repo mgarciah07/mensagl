@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Template to create EC2 instances with Security Groups, using an existing VPC and assigning specific private IPs."
+Description: "Plantilla para crear instancias EC2 con grupos de seguridad, usando un VPC existente  y asignando IP privadas concretas."
 
 Resources:
   EC2SecurityGroupHAProxy:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupName: "HAProxy"
-      GroupDescription: "Security group for HAProxy"
+      GroupDescription: "Grupo de seguridad para HAProxy"
       VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -26,7 +26,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupName: "HAProxy-Matrix"
-      GroupDescription: "Security group for Matrix Synapse service"
+      GroupDescription: "Grupo de seguridad para Matrix Synapse"
       VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -54,7 +54,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupName: "Wordpress-Tickets"
-      GroupDescription: "Security group for Tickets Wordpress"
+      GroupDescription: "Grupo de seguridad para Tickets Wordpress"
       VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -74,7 +74,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupName: "Postgres-Matrix"
-      GroupDescription: "Security group for Postgres"
+      GroupDescription: "Grupo de seguridad para Postgres"
       VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -247,6 +247,47 @@ Resources:
           # Añade la tarea cron al crontab actual
           (crontab -l 2>/dev/null; echo "$tarea") | crontab -
           ./duck.sh
+  EC2InstanceMatrix1:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceMatrix1
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Matrix1"
+
+  EC2InstanceMatrix2:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceMatrix2
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Matrix2"
   
   EC2InstancePostgres1:
     Type: AWS::EC2::Instance
@@ -289,13 +330,55 @@ Resources:
       Tags:
         - Key: Name
           Value: "Postgres-Matrix2"
+  
+  EC2InstanceWordpress1:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceWordpress1
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Wordpress1"
 
-  # New Security Group for RDS
+  EC2InstanceWordpress2:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: "ami-04b4f1a9cf54c11d0"
+      KeyName: "ssh-mensagl-2025-Marcos"
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref NetworkInterfaceWordpress2
+          DeviceIndex: "0"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            VolumeSize: 16
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: "Wordpress2"
+
+  # New Grupo de seguridad para RDS
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupName: "MySQL-RDS"
-      GroupDescription: "Security group for RDS MySQL allowing EC2 access"
+      GroupDescription: "Grupo de seguridad para RDS MySQL allowing EC2 access"
       VpcId: !ImportValue VPCId
       SecurityGroupIngress:
         - IpProtocol: tcp
