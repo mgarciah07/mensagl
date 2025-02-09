@@ -122,7 +122,7 @@ Resources:
         - Key: Name
           Value: "Matrix-Interface1"
 
-    NetworkInterfaceMatrix2:
+  NetworkInterfaceMatrix2:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PrivateSubnet1Id
@@ -170,7 +170,7 @@ Resources:
         - Key: Name
           Value: "Wordpress-Interface1"
 
-    NetworkInterfaceWordpress2:
+  NetworkInterfaceWordpress2:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PrivateSubnet2Id
@@ -446,11 +446,11 @@ Outputs:
   
   SecurityGroup2Id:
     Description: "Security Group ID"
-    Value: !Ref EC2SecurityGroupWordpress:
+    Value: !Ref EC2SecurityGroupWordpress
 
   SecurityGroup3Id:
     Description: "Security Group ID"
-    Value: !Ref Postgres:
+    Value: !Ref EC2SecurityGroupPostgres
 
   RDSSecurityGroupId:
     Description: "Security Group ID for RDS"
