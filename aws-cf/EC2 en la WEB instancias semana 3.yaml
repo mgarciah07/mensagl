@@ -234,7 +234,7 @@ Resources:
             VolumeType: gp3
       Tags:
         - Key: Name
-          Value: "Wordpress-Tickets"
+          Value: "HAProxy-Wordpress"
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
@@ -420,38 +420,58 @@ Resources:
           Value: "RDS-SubnetGroup"
 
 Outputs:
-  Instance1Id:
+  InstanceHAProxyMatrix1Id:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2InstanceHAProxyMatrix
 
-  Instance2Id:
+  InstanceHAProxyWordpress1Id:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2InstanceHAProxyWordpress
 
-  Instance3Id:
+  InstanceMatrix1Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2InstanceMatrix1
+
+  InstanceMatrix2Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2InstanceMatrix2
+
+  InstancePostgres1Id:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2InstancePostgres1
 
-  Instance4Id:
+  InstancePostgres2Id:
     Description: "Instance ID of the created EC2 instance"
     Value: !Ref EC2InstancePostgres2
+
+  InstanceWordpress1Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2InstanceWordpress1
+
+  InstanceWordpress2Id:
+    Description: "Instance ID of the created EC2 instance"
+    Value: !Ref EC2InstanceWordpress2
 
   RDSInstanceEndpoint:
     Description: "RDS MySQL Endpoint"
     Value: !GetAtt MySQLRDS.Endpoint.Address
 
-  SecurityGroup1Id:
+  EC2SecurityGroupHAProxyId:
     Description: "Security Group ID"
-    Value: !Ref EC2SecurityMatrix
+    Value: !Ref EC2SecurityGroupHAProxy
+
+  EC2SecurityGroupMatrixId:
+    Description: "Security Group ID"
+    Value: !Ref EC2SecurityGroupMatrix
   
-  SecurityGroup2Id:
+  EC2SecurityGroupWordpressId:
     Description: "Security Group ID"
     Value: !Ref EC2SecurityGroupWordpress
-
-  SecurityGroup3Id:
+  
+  EC2SecurityGroupPostgresId:
     Description: "Security Group ID"
     Value: !Ref EC2SecurityGroupPostgres
-
+  
   RDSSecurityGroupId:
     Description: "Security Group ID for RDS"
     Value: !Ref RDSSecurityGroup
