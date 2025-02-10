@@ -90,7 +90,7 @@ Resources:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PublicSubnet1Id
-      PrivateIpAddress: "10.210.1.2"
+      PrivateIpAddress: "10.210.1.10"
       Description: "Network Interface for HAProxy-Matrix"
       GroupSet:
         - !Ref EC2SecurityGroupHAProxy
@@ -102,7 +102,7 @@ Resources:
     Type: AWS::EC2::NetworkInterface
     Properties:
       SubnetId: !ImportValue PublicSubnet2Id
-      PrivateIpAddress: "10.210.2.2"
+      PrivateIpAddress: "10.210.2.10"
       Description: "Network Interface for Wordpress"
       GroupSet:
         - !Ref EC2SecurityGroupHAProxy
