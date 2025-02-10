@@ -6,14 +6,9 @@ ami_Ubuntu_22_04="ami-0e1bed4f06a3b463d"
 ami_Ubuntu_24_04="ami-04b4f1a9cf54c11d0"  # Reemplaza con el ID de la AMI de Ubuntu que desees usar
 instance_type="t2.micro"
 region="us-east-1"
-bucket_name="copias-seguridad-unique-name-$(date +%s)"  # Usa un nombre único
 
 # Desactivar paginación en AWS CLI
 export AWS_PAGER=""
-
-# Crear un par de claves
-aws ec2 create-key-pair --key-name "$key_name" --query 'KeyMaterial' --output text > "${key_name}.pem"
-chmod 400 "${key_name}.pem"
 
 # Obtener IDs de subredes y VPC
 vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=vpc-mensagl-2025-Marcos" --query "Vpcs[0].VpcId" --output text)
@@ -50,35 +45,33 @@ aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protoco
 aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
 sg_postgres_id=$(aws ec2 create-security-group --group-name "sg_postgres" --description "Security group for Postgres" --vpc-id "$vpc_id" --query 'GroupId' --output text)
-aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
-aws ec2 authorize-security-group-ingress --group-id "$sg_wordpress_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
+
+sg_nas_id=$(aws ec2 create-security-group --group-name "sg_nas" --description "Security group for NAS" --vpc-id "$vpc_id" --query 'GroupId' --output text)
+aws ec2 authorize-security-group-ingress --group-id "$sg_nas_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
 
 # Crear instancias HAProxy en subredes públicas
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxy1}]' --user-data file://script.sh
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxy2}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public1_id" --private-ip-address "10.210.1.10" --associate-public-ip-address --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxyMatrix}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_haproxy_id" --subnet-id "$subnet_public2_id" --private-ip-address "10.210.2.10" --associate-public-ip-address--tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=HAProxyWordpress}]' --user-data file://script.sh
 
 # Crear instancias Matrix-Synapse en subredes privadas
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --user-data file://script.sh
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse2}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.20" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse1}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_matrix_synapse_id" --subnet-id "$subnet_private2_id" --private-ip-address "10.210.3.21" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Matrix-Synapse2}]' --user-data file://script.sh
 
 # Crear instancias Wordpress en subredes privadas
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --user-data file://script.sh
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress2}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.4.20" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress1}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_wordpress_id" --subnet-id "$subnet_private2_id" --private-ip-address "10.210.4.21" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Wordpress2}]' --user-data file://script.sh
 
 # Crear instancias PostgreSQL en subredes privadas
-aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_postgres_id" --subnet-id "$subnet_private1_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres1}]' --user-data file://script.sh
-aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_postgres_id" --subnet-id "$subnet_private2_id" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres2}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_postgres_id" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.100" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres1}]' --user-data file://script.sh
+aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_postgres_id" --subnet-id "$subnet_private2_id" --private-ip-address "10.210.3.101" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres2}]' --user-data file://script.sh
 
 # Crear RDS MySQL para Wordpress
 aws rds create-db-instance --db-instance-identifier mysql-Wordpress --db-instance-class db.t3.micro --engine mysql --master-username admin --master-user-password password --allocated-storage 20 --vpc-security-group-ids "$sg_wordpress_id" --db-subnet-group-name "$subnet_private1_id"
 
 # Crear bucket S3 para copias de seguridad
-aws s3api create-bucket --bucket "$bucket_name" --region "$region"
+aws s3api create-bucket --bucket "s3-mensagl-marcos" --region "$region"
 
-# Cambios realizados:
-
-#     Nombre único para el bucket S3: Usa copias-seguridad-unique-name-$(date +%s) para asegurar que el nombre sea único.
-
-#     Subred especificada para RDS: He añadido --db-subnet-group-name para las instancias RDS, reemplazando "$subnet_private1_id" con un nombre de grupo de subredes válido. Asegúrate de crear un grupo de subredes de RDS primero si aún no lo has hecho.
-
-# Si necesitas más detalles o ayuda con algún paso en particular, ¡estaré encantado de ayudarte!
+# Crear NAS porque el S3 no deja subir nada con 2 discos de 30GB
+aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_nas_id" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.200" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=NAS}]' --user-data file://../aws-user-data/NAS-raid1.sh
