@@ -17,13 +17,8 @@ subnet_public2_id=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=vpc
 subnet_private1_id=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=vpc-mensagl-2025-Marcos-subnet-private1-us-east-1a" --query "Subnets[0].SubnetId" --output text)
 subnet_private2_id=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=vpc-mensagl-2025-Marcos-subnet-private2-us-east-1b" --query "Subnets[0].SubnetId" --output text)
 
-# Define el nombre del grupo de subredes y la descripción
-rds_subnet_group_name="rds-subnet-group-mensagl-2025"
-description="Subnet group for RDS instances"
-subnet_ids="$subnet_private1_id $subnet_private2_id"  # Reemplaza con los IDs de tus subredes privadas
-
 # Crear el grupo de subredes RDS
-aws rds create-db-subnet-group --db-subnet-group-name "$rds_subnet_group_name" --db-subnet-group-description "$description" --subnet-ids $subnet_ids
+aws rds create-db-subnet-group --db-subnet-group-name "rds-subnet-group-mensagl-2025" --db-subnet-group-description "Subnet group for RDS instances" --subnet-ids "$subnet_private1_id $subnet_private2_id"
 
 # Crear grupos de seguridad
 sg_haproxy_id=$(aws ec2 create-security-group --group-name "sg_HAProxy" --description "Security group for HAProxy" --vpc-id "$vpc_id" --query 'GroupId' --output text)
