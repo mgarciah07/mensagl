@@ -47,9 +47,12 @@ defaults
 	mode	http
 	option	httplog
 	option	dontlognull
-        timeout connect 5000
-        timeout client  50000
-        timeout server  50000
+    option http-server-close
+    option forwardfor
+    compression algo gzip
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
 	errorfile 400 /etc/haproxy/errors/400.http
 	errorfile 403 /etc/haproxy/errors/403.http
 	errorfile 408 /etc/haproxy/errors/408.http
@@ -60,7 +63,12 @@ defaults
 
 frontend http_front
     bind *:80
+    mode http
+    redirect scheme https code 301 if !{ ssl_fc }
+
+frontend https_front
     bind *:443 ssl crt /etc/letsencrypt/live/marcosticket.duckdns.org/haproxy.pem
+    mode http
     acl letsencrypt-req path_beg /.well-known/acme-challenge/
     use_backend letsencrypt-backend if letsencrypt-req
     default_backend app_back

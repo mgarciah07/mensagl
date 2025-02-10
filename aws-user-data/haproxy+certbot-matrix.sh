@@ -60,17 +60,30 @@ defaults
 
 frontend http_front
     bind *:80
+    mode http
+    redirect scheme https code 301 if !{ ssl_fc }
+
+frontend https_front
     bind *:443 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem
+    mode http
     acl letsencrypt-req path_beg /.well-known/acme-challenge/
     use_backend letsencrypt-backend if letsencrypt-req
     default_backend app_back
+
+# frontend matrix_federation
+#     bind *:8448 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem
+#     mode tcp
+#     default_backend federation_back
 
 backend app_back
     balance roundrobin
     server server1 10.210.3.20:8008 check
     server server2 10.210.3.21:8008 check
-    server server3 10.210.3.20:8448 check
-    server server4 10.210.3.21:8448 check
+
+# backend federation_back
+#     balance roundrobin
+#     server server1 10.210.3.20:8448 check
+#     server server2 10.210.3.21:8448 check
 
 backend letsencrypt-backend
     server letsencrypt 127.0.0.1:80 check
