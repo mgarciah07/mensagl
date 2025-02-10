@@ -2,8 +2,8 @@
 
 # Definir variables
 key_name="ssh-mensagl-2025-marcos"
-ami_Ubuntu_22_04="ami-0e1bed4f06a3b463d"
-ami_Ubuntu_24_04="ami-04b4f1a9cf54c11d0"  # Reemplaza con el ID de la AMI de Ubuntu que desees usar
+ami_Ubuntu_22_04="ami-0e1bed4f06a3b463d"  # Reemplaza con el ID de la AMI de Ubuntu que desees usar
+ami_Ubuntu_24_04="ami-04b4f1a9cf54c11d0"  
 instance_type="t2.micro"
 region="us-east-1"
 
@@ -48,6 +48,9 @@ sg_postgres_id=$(aws ec2 create-security-group --group-name "sg_postgres" --desc
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id "$sg_postgres_id" --protocol tcp --port 5432 --cidr 0.0.0.0/0
 
+sg_mysqlrds_id=$(aws ec2 create-security-group --group-name "sg_mysqlrds" --description "Security group for mysqlrds" --vpc-id "$vpc_id" --query 'GroupId' --output text)
+aws ec2 authorize-security-group-ingress --group-id "$sg_mysqlrds_id" --protocol tcp --port 3633 --cidr 0.0.0.0/0
+
 sg_nas_id=$(aws ec2 create-security-group --group-name "sg_nas" --description "Security group for NAS" --vpc-id "$vpc_id" --query 'GroupId' --output text)
 aws ec2 authorize-security-group-ingress --group-id "$sg_nas_id" --protocol tcp --port 22 --cidr 0.0.0.0/0
 
@@ -68,10 +71,23 @@ aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "
 aws ec2 run-instances --image-id "$ami_Ubuntu_22_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_postgres_id" --subnet-id "$subnet_private2_id" --private-ip-address "10.210.3.101" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Postgres2}]' --user-data file://script.sh
 
 # Crear RDS MySQL para Wordpress
-aws rds create-db-instance --db-instance-identifier mysql-Wordpress --db-instance-class db.t3.micro --engine mysql --master-username admin --master-user-password password --allocated-storage 20 --vpc-security-group-ids "$sg_wordpress_id" --db-subnet-group-name "$subnet_private1_id"
+aws rds create-db-instance --db-instance-identifier mysql-Wordpress --db-instance-class db.t3.micro --engine mysql --master-username admin --master-user-password password --allocated-storage 20 --vpc-security-group-ids "$sg_mysqlrds_id" --db-subnet-group-name "$subnet_private1_id"
 
 # Crear bucket S3 para copias de seguridad
 aws s3api create-bucket --bucket "s3-mensagl-marcos" --region "$region"
 
 # Crear NAS porque el S3 no deja subir nada con 2 discos de 30GB
-aws ec2 run-instances --image-id "$ami_Ubuntu_24_04" --count 1 --instance-type "$instance_type" --key-name "$key_name" --security-group-ids "$sg_nas_id" --subnet-id "$subnet_private1_id" --private-ip-address "10.210.3.200" --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=NAS}]' --user-data file://../aws-user-data/NAS-raid1.sh
+aws ec2 run-instances \
+    --image-id "$ami_Ubuntu_24_04" \
+    --count 1 \
+    --instance-type "$instance_type" \
+    --key-name "$key_name" \
+    --security-group-ids "$sg_nas_id" \
+    --subnet-id "$subnet_private1_id" \
+    --private-ip-address "10.210.3.200" \
+    --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=NAS}]'\
+    --block-device-mappings '[
+        {"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":30}},
+        {"DeviceName":"/dev/xvdb","Ebs":{"VolumeSize":30}}
+    ]' \
+    --user-data file://../aws-user-data/NAS-raid1.sh
