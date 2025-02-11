@@ -1,4 +1,13 @@
 #!/bin/bash
+
+######## Verificar si el script esta siendo ejecutado por el usuario root
+if [ "$EUID" -ne 0 ]; then
+    echo "Este script debe ser ejecutado como root."
+    exit 1  # Salir con un codigo de error
+else
+echo "Eres root. Ejecutando el comando..."
+fi
+
 apt update
 apt install haproxy certbot -y
 certbot certonly --standalone --agree-tos --non-interactive -m mgarciah07@educantabria.es -d marcosticket.duckdns.org --preferred-challenges http --renew-with-new-domains --keep-until-expiring

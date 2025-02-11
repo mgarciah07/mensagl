@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Verificar si el script está siendo ejecutado como root
+######## Verificar si el script esta siendo ejecutado por el usuario root
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ Este script debe ser ejecutado como root."
-    exit 1
+    echo "Este script debe ser ejecutado como root."
+    exit 1  # Salir con un codigo de error
 else
-    echo "✅ Eres root. Ejecutando el comando..."
+echo "Eres root. Ejecutando el comando..."
 fi
 
 # Variables

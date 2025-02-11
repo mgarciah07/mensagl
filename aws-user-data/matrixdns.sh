@@ -1,5 +1,13 @@
 #!/bin/bash
 
+######## Verificar si el script esta siendo ejecutado por el usuario root
+if [ "$EUID" -ne 0 ]; then
+    echo "Este script debe ser ejecutado como root."
+    exit 1  # Salir con un codigo de error
+else
+echo "Eres root. Ejecutando el comando..."
+fi
+
 mkdir duckdns
 cd duckdns
 
@@ -13,3 +21,4 @@ tarea="*/5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1"
 (crontab -l 2>/dev/null; echo "$tarea") | crontab -
 
 ./duck.sh
+
