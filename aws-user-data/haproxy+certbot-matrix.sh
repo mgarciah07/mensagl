@@ -64,23 +64,36 @@ frontend http_front
     redirect scheme https code 301 if !{ ssl_fc }
 
 frontend https_front
-    bind *:443 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem
+    bind *:443 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem alpn h2,http/1.1
     mode http
+    http-request set-header X-Forwarded-Proto https if { ssl_fc }
+    http-request set-header X-Forwarded-Proto http if !{ ssl_fc }
+    http-request set-header X-Forwarded-For %[src]
+
+    # Matrix client traffic
+    acl matrix-host hdr(host) -i marcosmatrix.duckdns.org marcosmatrix.duckdns.org:443
+    acl matrix-path path_beg /_matrix
+    acl matrix-path path_beg /_synapse/client
+    use_backend matrix if matrix-host matrix-path
+
     acl letsencrypt-req path_beg /.well-known/acme-challenge/
     use_backend letsencrypt-backend if letsencrypt-req
-    default_backend app_back
+    default_backend matrix
 
 # frontend matrix_federation
-#     bind *:8448 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem
+#     bind *:8448 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem alpn h2,http/1.1
 #     mode tcp
-#     default_backend federation_back
+#     http-request set-header X-Forwarded-Proto https if { ssl_fc }
+#     http-request set-header X-Forwarded-Proto http if !{ ssl_fc }
+#     http-request set-header X-Forwarded-For %[src]
+#     default_backend matrix_federation_back
 
-backend app_back
+backend matrix
     balance roundrobin
     server server1 10.210.3.20:8008 check
     server server2 10.210.3.21:8008 check
 
-# backend federation_back
+# backend matrix_federation_back
 #     balance roundrobin
 #     server server1 10.210.3.20:8448 check
 #     server server2 10.210.3.21:8448 check
@@ -88,3 +101,5 @@ backend app_back
 backend letsencrypt-backend
     server letsencrypt 127.0.0.1:80 check
 EOF
+
+systemctl restart haproxy
