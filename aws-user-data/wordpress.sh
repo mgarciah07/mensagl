@@ -49,8 +49,8 @@ echo "🔧 Configurando HTTPS detrás de HAProxy..."
 cat <<EOL >> "$WP_DIR/wp-config.php"
 
 # Forzar HTTPS si está detrás de un proxy como HAProxy
-if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    \$_SERVER['HTTPS'] = 'on';
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
 }
 EOL
 
