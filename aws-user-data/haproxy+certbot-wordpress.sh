@@ -84,4 +84,4 @@ backend letsencrypt-backend
     server letsencrypt 127.0.0.1:80 check
 EOF
 
-sydo systemctl restart haproxy
+sudo systemctl restart haproxy
