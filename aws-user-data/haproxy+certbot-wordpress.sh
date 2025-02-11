@@ -69,11 +69,14 @@ frontend http_front
 frontend https_front
     bind *:443 ssl crt /etc/letsencrypt/live/marcosticket.duckdns.org/haproxy.pem
     mode http
+    option forwardfor
+    http-request set-header X-Forwarded-Proto https
     acl letsencrypt-req path_beg /.well-known/acme-challenge/
     use_backend letsencrypt-backend if letsencrypt-req
     default_backend app_back
 
 backend app_back
+    mode http
     balance roundrobin
     server server1 10.210.4.20:80 check
     server server2 10.210.4.21:80 check
