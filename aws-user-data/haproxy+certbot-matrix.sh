@@ -94,7 +94,8 @@ backend app_back
     server server2 10.210.3.21:8008 check
 
 backend matrix
-    server matrix 10.210.3.20:8008 check
+    server matrix1 10.210.3.20:8008 check
+    server matrix2 10.210.3.21:8008 check
 
 # backend matrix_federation_back
 #     balance roundrobin
