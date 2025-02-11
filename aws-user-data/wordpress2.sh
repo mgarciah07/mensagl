@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1  # Salir con un codigo de error
 else
 echo "Eres root. Ejecutando el comando..."
-fi
+
 
 # Variables
 DB_NAME="wordpress"
@@ -165,3 +165,4 @@ wp option update whl_page "$NEW_LOGIN_PATH" --allow-root --path="$WP_DIR"
 echo "✅ Instalación y configuración completadas."
 echo "🔗 Ahora puedes acceder a WordPress en: ${WP_URL}${NEW_LOGIN_PATH}"
 
+fi

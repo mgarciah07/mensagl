@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1  # Salir con un codigo de error
 else
 echo "Eres root. Ejecutando el comando..."
-fi
+
 
 apt update
 apt install haproxy certbot -y
@@ -97,3 +97,5 @@ backend letsencrypt-backend
 EOF
 
 systemctl restart haproxy
+
+fi

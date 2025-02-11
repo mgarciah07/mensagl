@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1  # Salir con un código de error
 else
     echo "✅ Eres root. Ejecutando el comando..."
-fi
+
 
 # Variables
 DB_NAME="wordpress"
@@ -172,3 +172,5 @@ echo "✅ WordPress ha sido instalado automáticamente en $WP_URL"
 echo "🌍 Idioma configurado en Español"
 echo "🔑 Usuario Admin: $WP_ADMIN_USER"
 echo "🔑 Contraseña: $WP_ADMIN_PASSWORD"
+
+fi

@@ -5,7 +5,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1  # Salir con un codigo de error
 else
 echo "Eres root. Ejecutando el comando..."
-fi
+
 # Actualizamos el sistema
 apt-get update -y
 apt-get upgrade -y
@@ -28,3 +28,5 @@ mount /dev/md0 /mnt/raid
 
 # Agregamos el RAID a /etc/fstab para montaje automático
 echo '/dev/md0 /mnt/raid ext4 defaults,nofail,discard 0 0' >> /etc/fstab
+
+fi

@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1  # Salir con un codigo de error
 else
 echo "Eres root. Ejecutando el comando..."
-fi
+
 
 mkdir duckdns
 cd duckdns
@@ -22,3 +22,4 @@ tarea="*/5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1"
 
 ./duck.sh
 
+fi
