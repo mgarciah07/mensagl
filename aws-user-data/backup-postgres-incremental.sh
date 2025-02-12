@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Verificar si el script está siendo ejecutado por el usuario root
+######## Verificar si el script está siendo ejecutado por el usuario root
 if [ "$EUID" -ne 0 ]; then
     echo "Este script debe ser ejecutado como root."
     exit 1  # Salir con un código de error
@@ -20,33 +20,41 @@ else
         apt install -y awscli
     fi
 
+    # Añadir configuraciones a postgresql.conf si no existen
+    PG_CONF="/etc/postgresql/postgresql.conf"
+    grep -qxF "wal_level = archive" "$PG_CONF" || echo "wal_level = archive" >> "$PG_CONF"
+    grep -qxF "archive_mode = on" "$PG_CONF" || echo "archive_mode = on" >> "$PG_CONF"
+    grep -qxF "archive_command = 'test ! -f /path_to_your_wal_archive/%f && cp %p /path_to_your_wal_archive/%f'" "$PG_CONF" || echo "archive_command = 'test ! -f /path_to_your_wal_archive/%f && cp %p /path_to_your_wal_archive/%f'" >> "$PG_CONF"
+
+    # Reiniciar PostgreSQL para aplicar los cambios
+    systemctl restart postgresql
+
     # Crea el archivo de script de respaldo
     cat <<EOF > /home/ubuntu/backup-postgres.sh
 #!/bin/bash
 
 # Variables
 BACKUP_DIR="/home/ubuntu/backups"
-INCREMENTAL_DIR="/home/ubuntu/backups-incremental"
+WAL_DIR="/home/ubuntu/wal"
 DATE=\$(date +%Y-%m-%d)
 S3_BUCKET="s3://s3-mensagl-marcos"
 LOG_FILE="/var/log/backup-postgres.log"
 
 # Crear directorio de backups si no existe
 mkdir -p "\${BACKUP_DIR}"
-mkdir -p "\${INCREMENTAL_DIR}"
 
 # Realizar respaldo de la base de datos synapse
 export PGPASSWORD='Admin123'
-pg_dump -h 10.210.3.100 -U synapse_user -d synapse > "\${BACKUP_DIR}/backup_\${DATE}.sql" || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
+pg_basebackup -h 10.210.3.100 -U synapse_user -D "\${BACKUP_DIR}/base_\${DATE}" -Ft -z -X fetch -P || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
 
-# Sincronizar cambios incrementales al directorio incremental
-rsync -av --delete "\${BACKUP_DIR}/" "\${INCREMENTAL_DIR}/" || { echo "Error en rsync" >> "\${LOG_FILE}"; exit 1; }
+# Copiar archivos WAL archivados
+rsync -av --delete "\${WAL_DIR}/" "\${BACKUP_DIR}/wal_\${DATE}" || { echo "Error en rsync" >> "\${LOG_FILE}"; exit 1; }
 
-# Comprimir el directorio incremental
-tar -czf "\${INCREMENTAL_DIR}/backup_\${DATE}.tar.gz" -C "\${INCREMENTAL_DIR}" . || { echo "Error al comprimir" >> "\${LOG_FILE}"; exit 1; }
+# Comprimir el directorio de respaldo completo y los WAL archivados
+tar -czf "\${BACKUP_DIR}/backup_full_\${DATE}.tar.gz" -C "\${BACKUP_DIR}" "base_\${DATE}" "wal_\${DATE}" || { echo "Error al comprimir" >> "\${LOG_FILE}"; exit 1; }
 
 # Transferir la copia de seguridad a S3
-aws s3 cp "\${INCREMENTAL_DIR}/backup_\${DATE}.tar.gz" "\${S3_BUCKET}/backup_\${DATE}.tar.gz" || { echo "Error al subir a S3" >> "\${LOG_FILE}"; exit 1; }
+aws s3 cp "\${BACKUP_DIR}/backup_full_\${DATE}.tar.gz" "\${S3_BUCKET}/backup_full_\${DATE}.tar.gz" || { echo "Error al subir a S3" >> "\${LOG_FILE}"; exit 1; }
 
 EOF
 
