@@ -50,7 +50,7 @@ mkdir -p "\${BACKUP_DIR}"
 
 # Realizar respaldo incremental de la base de datos synapse
 export PGPASSWORD='Admin123'
-pg_basebackup -h 10.210.3.100 -U synapse_user -D "\${BACKUP_DIR}/base_\${DATE}" -Ft -z -X fetch -P -d synapse || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
+pg_basebackup -h 10.210.3.100 -U synapse_user -D "\${BACKUP_DIR}/base_\${DATE}" -Ft -z -X fetch -P || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
 
 # Copiar archivos WAL archivados
 rsync -av --delete "\${WAL_DIR}/" "\${BACKUP_DIR}/wal_\${DATE}" || { echo "Error en rsync" >> "\${LOG_FILE}"; exit 1; }
