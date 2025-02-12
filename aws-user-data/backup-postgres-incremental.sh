@@ -64,13 +64,13 @@ aws s3 cp "\${BACKUP_DIR}/backup_full_\${DATE}.tar.gz" "\${S3_BUCKET}/backup_ful
 EOF
 
     # Asegura que el archivo de backup sea ejecutable
-    chmod 700 /home/ubuntu/backup-postgres.sh
+    chmod +x /home/ubuntu/backup-postgres.sh
 
     # Configura la tarea cron para ejecutar el backup a las 2:00 AM todos los días
     tarea="0 2 * * * /home/ubuntu/backup-postgres.sh >> /var/log/backup-postgres.log 2>&1"
 
     # Añade la tarea cron al crontab actual, sin duplicar
-    (crontab -l 2>/dev/null; echo "$tarea") | crontab -
-
+    (crontab -l 2>/dev/null | grep -v -F "$tarea"; echo "$tarea") | crontab -
+fi
 
 
