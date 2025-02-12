@@ -89,5 +89,3 @@ EOF
     # Añade la tarea cron al crontab actual, sin duplicar
     (crontab -l 2>/dev/null | grep -v -F "$tarea"; echo "$tarea") | crontab -
 fi
-
-
