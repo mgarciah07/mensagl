@@ -34,10 +34,10 @@ mkdir -p "${INCREMENTAL_DIR}"
 rsync -av --delete "${BACKUP_DIR}/" "${INCREMENTAL_DIR}/" || { echo "Error en rsync"; exit 1; }
 
 # Comprimir el directorio incremental
-tar -czf "${INCREMENTAL_DIR}/backup_\${DATE}.tar.gz" -C "${INCREMENTAL_DIR}" . || { echo "Error al comprimir"; exit 1; }
+tar -czf "${INCREMENTAL_DIR}/backup_${DATE}.tar.gz" -C "${INCREMENTAL_DIR}" . || { echo "Error al comprimir"; exit 1; }
 
 # Transferir la copia de seguridad a S3
-aws s3 cp "${INCREMENTAL_DIR}/backup_\${DATE}.tar.gz" "${S3_BUCKET}/backup_\${DATE}.tar.gz" || { echo "Error al subir a S3"; exit 1; }
+aws s3 cp "${INCREMENTAL_DIR}/backup_${DATE}.tar.gz" "${S3_BUCKET}/backup_${DATE}.tar.gz" || { echo "Error al subir a S3"; exit 1; }
 
 EOF
 
