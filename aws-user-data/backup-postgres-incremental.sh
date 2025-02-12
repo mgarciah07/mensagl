@@ -1,5 +1,12 @@
 #!/bin/bash
 
+######## Verificar si el script esta siendo ejecutado por el usuario root
+if [ "$EUID" -ne 0 ]; then
+    echo "Este script debe ser ejecutado como root."
+    exit 1  # Salir con un codigo de error
+else
+echo "Eres root. Ejecutando el comando..."
+
 # Actualiza la lista de paquetes
 apt update
 
@@ -42,3 +49,5 @@ tarea="0 2 * * * /home/postgres/backup-postgres.sh >/dev/null 2>&1"
 
 # Añade la tarea cron al crontab actual, sin duplicar
 (crontab -l 2>/dev/null; echo "\$tarea") | crontab -
+
+fi
