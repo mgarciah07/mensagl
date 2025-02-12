@@ -32,7 +32,7 @@ else
     chmod 700 /home/ubuntu/wal
 
     # Añadir configuraciones a pg_hba.conf
-    PG_HBA="/etc/postgresql/{version}/main/pg_hba.conf"
+    PG_HBA="/etc/postgresql/17/main/pg_hba.conf"
     grep -qxF "hostssl replication synapse_user 10.210.3.100/32 md5" "$PG_HBA" || echo "hostssl replication synapse_user 10.210.3.100/32 md5" >> "$PG_HBA"
     grep -qxF "host replication synapse_user 10.210.3.100/32 md5" "$PG_HBA" || echo "host replication synapse_user 10.210.3.100/32 md5" >> "$PG_HBA"
 
