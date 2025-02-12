@@ -1,5 +1,14 @@
 #!/bin/bash
 
+sudo -u postgres psql -c "CREATE USER backups WITH PASSWORD 'Admin';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE synapse TO backups;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO backups;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO backups;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO backups;"
+sudo -u postgres psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO backups;"
+sudo -u postgres psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO backups;"
+sudo -u postgres psql -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON FUNCTIONS TO backups;"
+
 ######## Verificar si el script esta siendo ejecutado por el usuario root
 if [ "$EUID" -ne 0 ]; then
     echo "Este script debe ser ejecutado como root."
@@ -36,7 +45,8 @@ mkdir -p "\${BACKUP_DIR}"
 mkdir -p "\${INCREMENTAL_DIR}"
 
 # Realizar respaldo de todas las bases de datos
-pg_dumpall -U postgres > "\${BACKUP_DIR}/backup_\${DATE}.sql" || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
+export PGPASSWORD='Admin123'
+pg_dumpall -h 10.210.3.100 -U backups > "\${BACKUP_DIR}/backup_\${DATE}.sql" || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
 
 # Sincronizar cambios incrementales al directorio incremental
 rsync -av --delete "\${BACKUP_DIR}/" "\${INCREMENTAL_DIR}/" || { echo "Error en rsync" >> "\${LOG_FILE}"; exit 1; }
