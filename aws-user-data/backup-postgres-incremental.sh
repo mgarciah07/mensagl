@@ -31,8 +31,16 @@ else
     chown postgres:postgres /home/ubuntu/wal
     chmod 700 /home/ubuntu/wal
 
+    # Añadir configuraciones a pg_hba.conf
+    PG_HBA="/etc/postgresql/{version}/main/pg_hba.conf"
+    grep -qxF "hostssl replication synapse_user 10.210.3.100/32 md5" "$PG_HBA" || echo "hostssl replication synapse_user 10.210.3.100/32 md5" >> "$PG_HBA"
+    grep -qxF "host replication synapse_user 10.210.3.100/32 md5" "$PG_HBA" || echo "host replication synapse_user 10.210.3.100/32 md5" >> "$PG_HBA"
+
     # Reiniciar PostgreSQL para aplicar los cambios
     systemctl restart postgresql
+
+    # Otorgar el atributo REPLICATION a synapse_user
+    sudo -u postgres psql -c "ALTER USER synapse_user WITH REPLICATION;"
 
     # Crea el archivo de script de respaldo
     cat <<EOF > /home/ubuntu/backup-postgres.sh
@@ -44,6 +52,15 @@ WAL_DIR="/home/ubuntu/wal"
 DATE=\$(date +%Y-%m-%d)
 S3_BUCKET="s3://s3-mensagl-marcos"
 LOG_FILE="/var/log/backup-postgres.log"
+
+# Configurar credenciales de AWS CLI en el script
+AWS_ACCESS_KEY_ID="ASIAYSY2VMTNRD6QH7GN"
+AWS_SECRET_ACCESS_KEY="dAN6ZKzMAWZrN2Vm7M+5MVE8A0w9Wo+of9sWVz07"
+AWS_DEFAULT_REGION="us-east-1"
+
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+export AWS_DEFAULT_REGION
 
 # Crear directorio de backups si no existe
 mkdir -p "\${BACKUP_DIR}"
