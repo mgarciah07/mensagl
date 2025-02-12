@@ -24,7 +24,12 @@ else
     PG_CONF="/etc/postgresql/postgresql.conf"
     grep -qxF "wal_level = archive" "$PG_CONF" || echo "wal_level = archive" >> "$PG_CONF"
     grep -qxF "archive_mode = on" "$PG_CONF" || echo "archive_mode = on" >> "$PG_CONF"
-    grep -qxF "archive_command = 'test ! -f /path_to_your_wal_archive/%f && cp %p /path_to_your_wal_archive/%f'" "$PG_CONF" || echo "archive_command = 'test ! -f /path_to_your_wal_archive/%f && cp %p /path_to_your_wal_archive/%f'" >> "$PG_CONF"
+    grep -qxF "archive_command = 'test ! -f /home/ubuntu/wal/%f && cp %p /home/ubuntu/wal/%f'" "$PG_CONF" || echo "archive_command = 'test ! -f /home/ubuntu/wal/%f && cp %p /home/ubuntu/wal/%f'" >> "$PG_CONF"
+
+    # Crear directorio WAL y configurar permisos
+    mkdir -p /home/ubuntu/wal
+    chown postgres:postgres /home/ubuntu/wal
+    chmod 700 
 
     # Reiniciar PostgreSQL para aplicar los cambios
     systemctl restart postgresql
