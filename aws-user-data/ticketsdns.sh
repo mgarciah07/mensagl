@@ -7,8 +7,6 @@ if [ "$EUID" -ne 0 ]; then
 else
 echo "Eres root. Ejecutando el comando..."
 
-
-
 mkdir duckdns
 cd duckdns
 
