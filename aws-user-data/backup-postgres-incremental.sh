@@ -54,8 +54,8 @@ S3_BUCKET="s3://s3-mensagl-marcos"
 LOG_FILE="/var/log/backup-postgres.log"
 
 # Configurar credenciales de AWS CLI en el script
-AWS_ACCESS_KEY_ID="ASIAYSY2VMTNRD6QH7GN"
-AWS_SECRET_ACCESS_KEY="dAN6ZKzMAWZrN2Vm7M+5MVE8A0w9Wo+of9sWVz07"
+AWS_ACCESS_KEY_ID=""
+AWS_SECRET_ACCESS_KEY=""
 AWS_DEFAULT_REGION="us-east-1"
 
 export AWS_ACCESS_KEY_ID
