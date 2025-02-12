@@ -1,9 +1,9 @@
 #!/bin/bash
 
-######## Verificar si el script esta siendo ejecutado por el usuario root
+######## Verificar si el script está siendo ejecutado por el usuario root
 if [ "$EUID" -ne 0 ]; then
     echo "Este script debe ser ejecutado como root."
-    exit 1  # Salir con un codigo de error
+    exit 1  # Salir con un código de error
 else
     echo "Eres root. Ejecutando el comando..."
 
@@ -35,9 +35,9 @@ LOG_FILE="/var/log/backup-postgres.log"
 mkdir -p "\${BACKUP_DIR}"
 mkdir -p "\${INCREMENTAL_DIR}"
 
-# Realizar respaldo de todas las bases de datos
+# Realizar respaldo de la base de datos synapse
 export PGPASSWORD='Admin123'
-pg_dumpall -h 10.210.3.100 -U synapse_user > "\${BACKUP_DIR}/backup_\${DATE}.sql" || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
+pg_dump -h 10.210.3.100 -U synapse_user -d synapse > "\${BACKUP_DIR}/backup_\${DATE}.sql" || { echo "Error al realizar el backup de PostgreSQL" >> "\${LOG_FILE}"; exit 1; }
 
 # Sincronizar cambios incrementales al directorio incremental
 rsync -av --delete "\${BACKUP_DIR}/" "\${INCREMENTAL_DIR}/" || { echo "Error en rsync" >> "\${LOG_FILE}"; exit 1; }
@@ -59,4 +59,4 @@ EOF
     # Añade la tarea cron al crontab actual, sin duplicar
     (crontab -l 2>/dev/null; echo "$tarea") | crontab -
 
-fi
+
