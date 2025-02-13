@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1  # Salir con un código de error
 else
     echo "✅ Eres root. Ejecutando el comando..."
-
+fi
 
 # Variables
 DB_NAME="wordpress"
@@ -43,13 +43,11 @@ sed -i "s/password_here/$DB_PASSWORD/" "$WP_DIR/wp-config.php"
 sed -i "s/localhost/$DB_HOST/" "$WP_DIR/wp-config.php"
 sed -i "s/\$table_prefix = 'wp_';/\$table_prefix = '${WP_PREFIX}';/" "$WP_DIR/wp-config.php"
 
-
-echo "🔧 Configurando HTTPS detrás de HAProxy..."
-cat <<EOL >> "$WP_DIR/wp-config.php"
-
-# Forzar HTTPS si está detrás de un proxy como HAProxy
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
+    # Configurar HTTPS detrás de HAProxy y definir URL de WordPress
+    echo "🔧 Configurando HTTPS..." 
+    cat <<EOL >> "$WP_DIR/wp-config.php"
+if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    \$_SERVER['HTTPS'] = 'on';
 }
 EOL
 
@@ -76,6 +74,10 @@ if ! command -v wp &> /dev/null; then
     chmod +x wp-cli.phar
     mv wp-cli.phar /usr/local/bin/wp
 fi
+
+mkdir -p /var/www/.wp-cli/cache
+chown -R www-data:www-data /var/www/.wp-cli
+chmod -R 755 /var/www/.wp-cli
 
 # Instalación automática de WordPress
 echo "🚀 Instalando WordPress automáticamente..."
@@ -152,6 +154,8 @@ cat <<EOL >> "$HTACCESS_FILE"
 # Desactivar listado de directorios
 Options -Indexes
 EOL
+chown www-data:www-data "$HTACCESS_FILE"
+chmod 644 "$HTACCESS_FILE"
 
 # Reiniciar Apache para aplicar cambios
 echo "🔄 Reiniciando Apache..."
@@ -171,5 +175,3 @@ echo "✅ WordPress ha sido instalado automáticamente en $WP_URL"
 echo "🌍 Idioma configurado en Español"
 echo "🔑 Usuario Admin: $WP_ADMIN_USER"
 echo "🔑 Contraseña: $WP_ADMIN_PASSWORD"
-
-fi
