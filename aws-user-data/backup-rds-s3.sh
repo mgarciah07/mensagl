@@ -17,7 +17,10 @@ else
 
     # Verifica si AWS CLI está instalado
     if ! command -v aws &> /dev/null; then
-        apt install -y awscli
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        ./aws/install
+
     fi
 
     # Variables
