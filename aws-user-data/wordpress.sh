@@ -71,12 +71,12 @@ sed -i 's|DocumentRoot .*|DocumentRoot /var/www/html/wordpress|' /etc/apache2/si
 systemctl restart apache2
 
 # Instalamos WP-CLI si no está presente para poder instalar los plugins de forma automática
-
-echo "🛠️ Instalando WP-CLI..."
-curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-chmod +x wp-cli.phar
-mv wp-cli.phar /usr/local/bin/wp
-
+if ! command -v wp &> /dev/null; then
+    echo "🛠️ Instalando WP-CLI..."
+    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    chmod +x wp-cli.phar
+    mv wp-cli.phar /usr/local/bin/wp
+fi
 
 # Instalación automática de WordPress
 echo "🚀 Instalando WordPress automáticamente..."
