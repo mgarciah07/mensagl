@@ -46,21 +46,15 @@ else
     cat <<EOF > /home/ubuntu/backup-postgres.sh
 #!/bin/bash
 
+# Especificar la ubicación del archivo de credenciales de AWS
+export AWS_SHARED_CREDENTIALS_FILE="/home/ubuntu/.aws/credentials"
+
 # Variables
 BACKUP_DIR="/home/ubuntu/backups"
 WAL_DIR="/home/ubuntu/wal"
 DATE=\$(date +%Y-%m-%d)
 S3_BUCKET="s3://s3-mensagl-marcos"
 LOG_FILE="/var/log/backup-postgres.log"
-
-# Configurar credenciales de AWS CLI en el script
-AWS_ACCESS_KEY_ID=""
-AWS_SECRET_ACCESS_KEY=""
-AWS_DEFAULT_REGION="us-east-1"
-
-export AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY
-export AWS_DEFAULT_REGION
 
 # Crear directorio de backups si no existe
 mkdir -p "\${BACKUP_DIR}"
@@ -82,10 +76,12 @@ EOF
 
     # Asegura que el archivo de backup sea ejecutable
     chmod +x /home/ubuntu/backup-postgres.sh
-
+    
     # Configura la tarea cron para ejecutar el backup a las 2:00 AM todos los días
     tarea="0 2 * * * /home/ubuntu/backup-postgres.sh >> /var/log/backup-postgres.log 2>&1"
 
     # Añade la tarea cron al crontab actual, sin duplicar
     (crontab -l 2>/dev/null | grep -v -F "$tarea"; echo "$tarea") | crontab -
 fi
+
+
