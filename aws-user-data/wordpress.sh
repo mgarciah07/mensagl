@@ -46,6 +46,8 @@ sed -i "s/\$table_prefix = 'wp_';/\$table_prefix = '${WP_PREFIX}';/" "$WP_DIR/wp
     # Configurar HTTPS detrás de HAProxy y definir URL de WordPress
     echo "🔧 Configurando HTTPS..." 
     cat <<EOL >> "$WP_DIR/wp-config.php"
+define('FORCE_SSL_ADMIN', true);
+    
 if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     \$_SERVER['HTTPS'] = 'on';
 }
