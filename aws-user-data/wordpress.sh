@@ -32,7 +32,6 @@ echo "📥 Descargando WordPress..."
 cd /var/www/html
 wget -q https://wordpress.org/latest.tar.gz
 tar -xzf latest.tar.gz
-mv wordpress "/var/www/html/"
 rm -f latest.tar.gz
 
 # Configuramos wp-config.php
