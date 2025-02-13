@@ -95,7 +95,7 @@ sudo -u www-data wp plugin install ultimate-member --activate --path="$WP_DIR"
 # Configurar opciones de WordPress
 wp option update home "$WP_URL" --allow-root --path="$WP_DIR"
 wp option update siteurl "$WP_URL" --allow-root --path="$WP_DIR"
-chmod -R 755 "$WP_DIR"
+
 
 # Deshabilitar pingbacks y trackbacks en WordPress
 TABLE_PREFIX=$(grep "^\$table_prefix" "$WP_DIR/wp-config.php" | cut -d "'" -f2)
