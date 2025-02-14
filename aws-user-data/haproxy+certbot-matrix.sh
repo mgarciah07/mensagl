@@ -89,6 +89,13 @@ frontend https_front
     use_backend letsencrypt-backend if letsencrypt-req
     default_backend app_back
 
+# Frontend para PostgreSQL en el puerto 5432
+frontend postgresql
+    bind *:5432
+    mode tcp
+    option tcplog
+    default_backend postgresql_backend
+
 # frontend matrix_federation
 #     bind *:8448 ssl crt /etc/letsencrypt/live/marcosmatrix.duckdns.org/haproxy.pem alpn h2,http/1.1
 #     mode tcp
@@ -104,8 +111,15 @@ backend app_back
 
 backend matrix
     balance roundrobin
-    server matrix1 10.210.3.20:8008 check
-    server matrix2 10.210.3.21:8008 check
+    server matrix1 10.210.3.20:8008 check on-marked-down shutdown-sessions
+    server matrix2 10.210.3.21:8008 check backup
+
+backend postgresql_backend
+    mode tcp
+    option tcp-check
+    balance source  # Usa source para mantener conexiones pegadas
+    server postgresql_master 10.210.3.100:5432 check on-marked-down shutdown-sessions
+    server postgresql_slave 10.210.3.101:5432 check backup
 
 # backend matrix_federation_back
 #     balance roundrobin
