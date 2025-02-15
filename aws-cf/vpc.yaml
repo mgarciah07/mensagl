@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: VPC with 2 public subnets, 2 private subnets, and NAT Gateway
+Description: VPC con 2 subredes públicas, 2 subredes privadas, y Gateway NAT
 
+# Creación de la VPC
 Resources:
   MyVPC:
     Type: AWS::EC2::VPC
