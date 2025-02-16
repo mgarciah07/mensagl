@@ -1,31 +1,24 @@
 #!/bin/bash
 
-# Add PostgreSQL APT repository
+# Añadir el repositorio de PostgreSQL 17
 sudo apt install wget -y
 wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee -a /etc/apt/trusted.gpg.d/pgdg.asc
-
-# Add the repository
 echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
 
-# Update and install PostgreSQL 17
+# Actualizar e instalar PostgreSQL 17
 sudo apt update -y
 sudo apt install postgresql-17 -y
 sudo apt-get install postgresql-client
-sudo systemctl enable postgresql
-clear
 
 # Variable matrix
 echo "Paso 1"
-read -p "Escribe la red en la que esta el servidor de comunicaciones (DONDE SE ALOJA MATRIX) 'ej: 192.168.100.1/24' (MASCARA DE RED OBLIGATORIA): " RED
-clear
+read -p "Escribe la red en la que esta el servidor de comunicaciones (DONDE SE ALOJA MATRIX) 'ej: 192.168.100.0/24' (MASCARA DE RED OBLIGATORIA): " RED
 
 echo "Paso 2"
 read -p "Dime la ip del servidor maestro (LA IP DE ESTA MAQUINA): " PRIMARY_IP
-clear
 
 echo "Paso 3"
-read -p "Dime la ip del servidor esclavo (LA IP DE ESTA MAQUINA): " STANDBY_IP
-clear
+read -p "Dime la ip del servidor esclavo (LA IP DEL SERVIDOR SECUNDARIO): " SECONDARY_IP
 
 
 # Variables configurables
@@ -43,42 +36,39 @@ exec_as_postgres() {
     sudo -u postgres bash -c "$1"
 }
 
-# Actualizar y instalar PostgreSQL y repmgr
-echo "Instalando PostgreSQL y repmgr..."
+# Actualizar e instalar repmgr
+echo "Instalando repmgr..."
 sudo apt update
 sudo apt install -y postgresql-17-repmgr
-sudo systemctl enable postgresql
-clear
+sudo systemctl restart postgresql
+
 
 # Asignar contraseña al usuario postgres
 echo "Asignando contraseña al usuario postgres..."
 sudo passwd postgres
-clear
 
 
 
-read  -p "Entra a tu otra maquina donde quieres tener el sevidor esclavo y ejecuta el script de instalacion, cuando en la otrs maquina te salga que ya puedes regresar, haz click en enter"
+read  -p "Entra a tu otra maquina donde quieres tener el sevidor esclavo y ejecuta el script de instalacion, cuando en la otra maquina te salga que ya puedes regresar, dale a enter"
 echo "¡Has presionado Enter! Continuando con el script..."
-
 
 
 # Configurar claves SSH para replicación
 echo "Generando claves SSH para replicación..."
 exec_as_postgres "ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa"
-exec_as_postgres "ssh-copy-id postgres@$STANDBY_IP"
-clear
+exec_as_postgres "ssh-copy-id postgres@$SECONDARY_IP"
+
 
 
 # Crear usuario y base de datos repmgr
 echo "Creando usuario y base de datos repmgr..."
 exec_as_postgres "createuser -s $REPMGR_USER"
 exec_as_postgres "createdb $REPMGR_DB -O $REPMGR_USER"
-clear
 
-echo "A continuacion, se le va a pedir la contraseña del usuario Matrix, apunte su contraseña para proseguir con la configuracion: "
+
+echo "A continuacion, se le va a pedir la contraseña del usuario de Matrix, escriba su contraseña para proseguir con la configuracion: "
 exec_as_postgres "createuser --pwprompt $SYNAPSE_USER"
 exec_as_postgres "createdb --encoding=UTF8 --locale=C --template=template0 --owner=synapse_user $DB_SYNAPSE"
-
 
 
 # Modificar postgresql.conf
@@ -89,7 +79,7 @@ sudo sed -i "/^#archive_mode/c\archive_mode = on" /etc/postgresql/$POSTGRES_VERS
 sudo sed -i "/^#archive_command/c\archive_command = '/bin/true'" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
 sudo sed -i "/^#max_wal_senders/c\max_wal_senders = 10" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
 sudo sed -i "/^#max_replication_slots/c\max_replication_slots = 10" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
-sudo sed -i "/^#hot_standby/c\hot_standby = on" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
+sudo sed -i "/^#hot_SECONDARY/c\hot_SECONDARY = on" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
 sudo sed -i "/^#listen_addresses/c\listen_addresses = '*'" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
 sudo sed -i "/^#wal_log_hints/c\wal_log_hints = on" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
 
@@ -101,12 +91,12 @@ sudo bash -c "cat >> $PG_HBA_PATH" <<EOF
 local   replication   $REPMGR_USER                                   trust
 host    replication   $REPMGR_USER     127.0.0.1/32                  trust
 host    replication   $REPMGR_USER     $PRIMARY_IP/32                trust
-host    replication   $REPMGR_USER     $STANDBY_IP/32                trust
+host    replication   $REPMGR_USER     $SECONDARY_IP/32              trust
 local   $REPMGR_DB    $REPMGR_USER                                   trust
 host    $REPMGR_DB    $REPMGR_USER     127.0.0.1/32                  trust
 host    $REPMGR_DB    $REPMGR_USER     $PRIMARY_IP/32                trust
-host    $REPMGR_DB    $REPMGR_USER     $STANDBY_IP/32                trust
-host    all             all             $RED             md5
+host    $REPMGR_DB    $REPMGR_USER     $SECONDARY_IP/32              trust
+host    all             all            $RED                          md5
 EOF
 
 # Reiniciar servicio PostgreSQL
@@ -121,8 +111,8 @@ node_name=$NODE_NAME
 conninfo='host=$PRIMARY_IP user=$REPMGR_USER dbname=$REPMGR_DB connect_timeout=2'
 data_directory='$DATA_DIR'
 failover=automatic
-promote_command='repmgr -f $REPMGR_CONF standby promote --log-to-file'
-follow_command='repmgr -f $REPMGR_CONF standby follow --log-to-file'
+promote_command='repmgr -f $REPMGR_CONF SECONDARY promote --log-to-file'
+follow_command='repmgr -f $REPMGR_CONF SECONDARY follow --log-to-file'
 log_file='/var/log/postgresql/repmgr.log'
 use_replication_slots=1  # Usar replication slots
 EOF

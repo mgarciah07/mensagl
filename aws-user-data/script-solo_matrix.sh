@@ -11,6 +11,7 @@ echo "Eres root. Ejecutando el comando..."
 ########## Actualizar el sistema
 apt update
 
+
 ######### INSTALACION MATRIX SYNAPSE
 apt install -y lsb-release wget apt-transport-https
 
@@ -81,6 +82,7 @@ trusted_key_servers:
   - server_name: "${DOMINIO}"
 registration_shared_secret: "ynUUfPx3K7dCUtdm5KFcXAIRm64UlXan"
 EOF
+
 
 # Reiniciar Matrix Synapse para aplicar la configuracion
 systemctl restart matrix-synapse
