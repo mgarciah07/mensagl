@@ -54,8 +54,6 @@ host    all             all             ::1/128                 scram-sha-256
 local   replication     all                                     peer
 host    replication     all             127.0.0.1/32            scram-sha-256
 host    replication     all             ::1/128                 scram-sha-256
-host  	all		          all		          10.0.1.0/24             md5	
-host    all             all             10.0.2.0/24             md5
 host    all             all             $matrixip/24            md5
 EOF
 
