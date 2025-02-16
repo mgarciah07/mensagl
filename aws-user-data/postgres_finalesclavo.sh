@@ -1,98 +1,86 @@
 #!/bin/bash
+set -e  # Detener el script si hay un error
 
-# Add PostgreSQL APT repository
+# Añadir el repositorio de PostgreSQL 17
 sudo apt install wget -y
 wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee -a /etc/apt/trusted.gpg.d/pgdg.asc
-
-# Add the repository
 echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
 
-# Update and install PostgreSQL 17
+# Actualizar e instalar PostgreSQL 17
 sudo apt update -y
-sudo apt install postgresql-17 -y
-sudo apt-get install postgresql-client
-clear
+sudo apt install postgresql-17 postgresql-client -y
 
-read -p "Dime la ip del servidor maestro: " PRIMARY_IP
-clear
+# Validar direcciones IP
+validate_ip() {
+    local ip=$1
+    local regex='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+    if [[ ! $ip =~ $regex ]]; then
+        echo "Dirección IP no válida: $ip"
+        exit 1
+    fi
+}
 
-read -p "Dime la ip del servidor esclavo (LA IP DE ESTA MAQUINA): " SECONDARY_IP
-clear
+# Obtener IPs del usuario
+echo "Paso 1"
+read -p "IP del servidor maestro: " PRIMARY_IP
+validate_ip $PRIMARY_IP
 
-# Variables configurables
-USUARIO="ubuntu"
+echo "Paso 2"
+read -p "IP de este servidor esclavo: " SECONDARY_IP
+validate_ip $SECONDARY_IP
+
+# Configuración de PostgreSQL
 REPMGR_DB="repmgr"
 REPMGR_USER="repmgr"
 NODE_NAME="pg2"
 DATA_DIR="/var/lib/postgresql/17/main"
 REPMGR_CONF="/etc/repmgr.conf"
-POSTGRES_VERSION="17"          # Cambia esto si tienes una versión diferente
+POSTGRES_VERSION="17"
 
-# Función para ejecutar como usuario postgres
-exec_as_postgres() {
-    sudo -u postgres bash -c "$1"
-}
-
-# Actualizar e instalar repmgr
-echo "Instalando repmgr..."
-sudo apt update
+# Instalar y configurar repmgr
 sudo apt install -y postgresql-17-repmgr
 sudo systemctl restart postgresql
 
-
 # Asignar contraseña al usuario postgres
-echo "Asignando contraseña al usuario postgres..."
 sudo passwd postgres
 
-read  -p "Entra a tu otra maquina donde quieres tener el sevidor maestro y finaliza la instalacion, cuando termine, haz click en enter: "
-echo "¡Has presionado Enter! Continuando con el script..."
+# Habilitar autenticación por contraseña en SSH
+sudo sed -i 's/^#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sudo systemctl restart ssh
 
-# Configurar claves SSH para replicación con el maestro
-echo "Generando claves SSH para replicación con el maestro..."
-exec_as_postgres "ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa"
-exec_as_postgres "ssh-copy-id postgres@$PRIMARY_IP"
+# Configurar claves SSH para replicación
+sudo -u postgres ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+sudo -u postgres ssh-copy-id postgres@$PRIMARY_IP
 
+# Modificar configuración de PostgreSQL
+sudo systemctl stop postgresql
+sudo rm -rf $DATA_DIR
 
-# Modificar postgresql.conf
-echo "Configurando postgresql.conf..."
-sudo sed -i "/^#data_directory/c\data_directory = '$DATA_DIR'" /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf
+# Clonar el servidor esclavo desde el maestro
+sudo -u postgres repmgr -h $PRIMARY_IP -U $REPMGR_USER -d $REPMGR_DB -f $REPMGR_CONF standby clone --copy-external-config-files
 
-# Reiniciar servicio PostgreSQL
-echo "Reiniciando servicio PostgreSQL..."
-sudo systemctl restart postgresql
-
-
-# Crear archivo de configuración de repmgr
-echo "Creando archivo de configuración de repmgr en $REPMGR_CONF..."
+# Configurar repmgr.conf
 sudo bash -c "cat > $REPMGR_CONF" <<EOF
 node_id=2
 node_name=$NODE_NAME
 conninfo='host=$SECONDARY_IP user=$REPMGR_USER dbname=$REPMGR_DB connect_timeout=2'
 data_directory='$DATA_DIR'
 failover=automatic
-promote_command='repmgr -f $REPMGR_CONF SECONDARY promote --log-to-file --siblings-follow --verbose'
-follow_command='repmgr -f $REPMGR_CONF SECONDARY follow --log-to-file'
+promote_command='repmgr -f $REPMGR_CONF standby promote --log-to-file'
+follow_command='repmgr -f $REPMGR_CONF standby follow --log-to-file'
 log_file='/var/log/postgresql/repmgr.log'
-use_replication_slots=1  # Usar replication slots
+use_replication_slots=1
 EOF
 
-sudo rm -rf /var/lib/postgresql/17/main/
+# Reiniciar PostgreSQL
+sudo systemctl start postgresql
 
-# Clonar el servidor SECONDARY desde el maestro utilizando repmgr
-echo "Clonando el nodo SECONDARY desde el nodo maestro..."
-exec_as_postgres "repmgr -h $PRIMARY_IP -U $REPMGR_USER -d $REPMGR_DB -f $REPMGR_CONF SECONDARY clone --copy-external-config-files"
+# Registrar el servidor esclavo en repmgr
+sudo -u postgres repmgr -f $REPMGR_CONF standby register
+sudo -u postgres repmgr -f $REPMGR_CONF cluster show
 
-
-sudo systemctl restart postgresql
-
-
-# Registrar el servidor SECONDARY en repmgr
-echo "Registrando el servidor SECONDARY en repmgr..."
-exec_as_postgres "repmgr -f /etc/repmgr.conf SECONDARY register"
-exec_as_postgres "repmgr -f $REPMGR_CONF cluster show"
-
-# Iniciar repmgrd (daemon)
+# Iniciar repmgrd
 echo "Iniciando el daemon de repmgr..."
-exec_as_postgres "repmgrd -f $REPMGR_CONF -d"
+sudo -u postgres repmgrd -f $REPMGR_CONF -d
 
-echo "¡Configuración de PostgreSQL con repmgr en el servidor SECONDARY completada!"
+echo "¡Configuración del servidor esclavo completada!"
