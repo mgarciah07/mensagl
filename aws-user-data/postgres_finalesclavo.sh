@@ -84,3 +84,4 @@ echo "Iniciando el daemon de repmgr..."
 sudo -u postgres repmgrd -f $REPMGR_CONF -d
 
 echo "¡Configuración del servidor esclavo completada!"
+
